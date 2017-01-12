@@ -67,6 +67,7 @@ $(function() {
   entry = document.getElementById("foo");
   var midiouts = [];
   JZZ().and(function(){
+      console.log(this.info());
       var outs = this.info().outputs;
       console.log(this.info());
       for (var i = 0; i < outs.length; i++) {
