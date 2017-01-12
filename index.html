@@ -66,6 +66,7 @@
   var midiouts = [];
   JZZ().and(function(){
       var outs = this.info().outputs;
+      console.log(this.info());
       for (var i = 0; i < outs.length; i++) {
       midiouts.push(outs[i].name);
       console.log('MIDI-Out' + i + ' :', outs[i].name);
