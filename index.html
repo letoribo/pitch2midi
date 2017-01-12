@@ -62,6 +62,8 @@
 <label style=" float: right; padding-top: 6px;">MIDI Out:</label> </div> 
 
 <script type="text/javascript">
+
+$(function() {
   entry = document.getElementById("foo");
   var midiouts = [];
   JZZ().and(function(){
@@ -74,39 +76,41 @@
     } 
   });
 
-JZZ().or('Cannot start MIDI engine!')
+  JZZ().or('Cannot start MIDI engine!')
        .openMidiOut().or('Cannot open MIDI Out port!')
        .send([0xc0,81])
-$( "#amount" ).focus(function () { this.blur();});
-$( "#Tabl" ).focus(function () { this.blur();}); $( "#Amount" ).focus(function () { this.blur();});$( "button" ).click(function () { this.blur();});
-$( "#volume" ).spinner().spinner( "value", 111 );
-$( "#volume" ).spinner({ min: 0, max: 127,
-  spin: function( event, ui ) {
-    JZZ().openMidiOut().send([0xb0,7,$( "#volume" ).spinner( "value" )])
-  }
-}); 
-$( "#Slider" ).slider({
-  min: 0,
-  max: 127,
-  value : 57,
-  change: function( event, ui ) {program = ui.value;
-    $( "#Amount" ).val( ui.value);
-    $( "#Tabl" ).val(mas[ui.value]);
-    JZZ().openMidiOut().send([0xb0,120,0]).send([0xb0,7,$( "#volume" ).spinner( "value" )]).send([0xc0,program])
-  }
-}).width(1260);
+    $( "#amount" ).focus(function () { this.blur();});
+    $( "#Tabl" ).focus(function () { this.blur();}); $( "#Amount" ).focus(function () { this.blur();});$( "button" ).click(function () { this.blur();});
+    $( "#volume" ).spinner().spinner( "value", 111 );
+    $( "#volume" ).spinner({ min: 0, max: 127,
+      spin: function( event, ui ) {
+        JZZ().openMidiOut().send([0xb0,7,$( "#volume" ).spinner( "value" )])
+      }
+    }); 
+  $( "#Slider" ).slider({
+    min: 0,
+    max: 127,
+    value : 57,
+    change: function( event, ui ) {program = ui.value;
+      $( "#Amount" ).val( ui.value);
+      $( "#Tabl" ).val(mas[ui.value]);
+      JZZ().openMidiOut().send([0xb0,120,0]).send([0xb0,7,$( "#volume" ).spinner( "value" )]).send([0xc0,program])
+    }
+  }).width(1260);
 
-$( "#Amount" ).val( $( "#Slider" ).slider(  "value" ));
-$( "#Tabl" ).val(mas[$( "#Slider" ).slider(  "value" )]);
-$( "#Slider" ).slider({
-  slide: function( event, ui ) {
-    $( "#Amount" ).val( ui.value);
-    $( "#Tabl" ).val(mas[ui.value])
-  }
-});
+  $( "#Amount" ).val( $( "#Slider" ).slider(  "value" ));
+  $( "#Tabl" ).val(mas[$( "#Slider" ).slider(  "value" )]);
+  $( "#Slider" ).slider({
+    slide: function( event, ui ) {
+      $( "#Amount" ).val( ui.value);
+      $( "#Tabl" ).val(mas[ui.value])
+    }
+  });
 		                    
-$( "#selectmidi" ).change(function () {
-  JZZ().openMidiOut().send([0xc0,$( "#Slider" ).slider( "value" )])
+  $( "#selectmidi" ).change(function () {
+    JZZ().openMidiOut().send([0xc0,$( "#Slider" ).slider( "value" )])
+  });
+
 });
 
   var canvas = $("canvas")[0];
