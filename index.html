@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>Pitch Detector</title>
+<link href="css/style.css" rel="stylesheet" type="text/css">
+  <link rel="stylesheet" href="css/jquery-ui.css" />
+  <link rel="shortcut icon" href="images/avatar.gif">
+  <script src="js/jquery-1.9.1.js"></script>
+  <script src="js/jquery-ui.js"></script>
+</head>
+<body>
+<script src="js/JZZ.js"></script>
+<script src="js/AudioContextMonkeyPatch2.js"></script>
+<script src="js/pitchdetect.js"></script>
+<script type="text/javascript" src="js/teoria.js"></script>
+<script type="text/javascript" src="js/vexflow-min.js"></script>
+<script type="text/javascript" src="js/watch.min.js"></script>
+<script type="text/javascript" src="js/gm.js"></script>
+
+<div id="container" class="center">
+<div id="plotframe">
+  <canvas width=300 height=230></canvas>
+</div>
+</div>
+
+<center>
+<label class="fileContainer button">upload audio<input type=file id=file size=80 accept='audio/*' onchange='loadSound();'></label><br>
+<button onclick="this.innerText = togglePlayback()" class="button" disabled>use demo</button>
+<button onclick="toggleLiveInput()" class="button">use live</button>
+<div id="detector" class="vague">
+<div class="pitch"><span id="pitch"></span>-Hz</div><br>
+<div class="pitch"><span id="pitch"></span>Helmholtz pitch class :</div>
+<div class="note"><span id="note">-</span></div>   
+<canvas id="output" width="300" height="42"></canvas>
+<div id="detune"><span id="detune_amt">--</span><span id="flat">cents &#9837;</span><span id="sharp">cents &#9839;</span></div>
+</div>
+<label for="amount" > MIDI key number :</label><input type="text" id="amount" size="3px" class="range">
+<input id="foo"/>
+	<label for="Tabl" style="padding-left: 1px;"> Instr:</label><input type="text" id="Tabl" class="range">
+   <label for="Amount" style="padding-left:8px;">Pr. Change:</label><input type="text" id="Amount" size="3px" class="range" style="padding-left:1px;">
+   <input id="volume" size="2" title = "midi volume" style="cursor: pointer; "/>   
+   <label>Gain</label>
+  <input id="Gain" size="4" step="0.001" style="cursor: pointer; "/>
+  <br><br>
+<div id="Slider"></div>
+<br><select>
+<option>Helmholtz pitch notation</option>
+<option>A,, - B,, sub-contra</option>
+<option>C, - B, contra</option>
+<option>C - B great</option>
+<option>c - b small</option>
+<option>c' - b' one-lined</option>
+<option>c'' - b'' two-lined</option>
+<option>c''' - b''' three-lined</option>
+<option>c'''' four-lined</option>
+</select>
+</center>
+ <div title="works well in the latest Chrome browser" style=' width: 90px;position: absolute;bottom: 0;'>
+ <a href="https://support.google.com/chrome/answer/95346?hl=en"><img src="images/chrome_3711.ico" ></a>
+ </div>
+<div style='position: absolute;bottom: 0;right:0;'>
+<select id=selectmidi></select>
+<label style=" float: right; padding-top: 6px;">MIDI Out:</label> </div> 
+
+<script type="text/javascript">
+  entry = document.getElementById("foo");
+  var midiouts = [];
+  JZZ().and(function(){
+      var outs = this.info().outputs;
+      for (var i = 0; i < outs.length; i++) {
+      midiouts.push(outs[i].name);
+      console.log('MIDI-Out' + i + ' :', outs[i].name);
+      select_out=document.getElementById('selectmidi');select_out[i]=new Option(midiouts[i],midiouts[i],i==10,i==10);
+    } 
+  });
+
+JZZ().or('Cannot start MIDI engine!')
+       .openMidiOut().or('Cannot open MIDI Out port!')
+       .send([0xc0,81])
+$( "#amount" ).focus(function () { this.blur();});
+$( "#Tabl" ).focus(function () { this.blur();}); $( "#Amount" ).focus(function () { this.blur();});$( "button" ).click(function () { this.blur();});
+$( "#volume" ).spinner().spinner( "value", 111 );
+$( "#volume" ).spinner({ min: 0, max: 127,
+  spin: function( event, ui ) {
+    JZZ().openMidiOut().send([0xb0,7,$( "#volume" ).spinner( "value" )])
+  }
+}); 
+$( "#Slider" ).slider({
+  min: 0,
+  max: 127,
+  value : 57,
+  change: function( event, ui ) {program = ui.value;
+    $( "#Amount" ).val( ui.value);
+    $( "#Tabl" ).val(mas[ui.value]);
+    JZZ().openMidiOut().send([0xb0,120,0]).send([0xb0,7,$( "#volume" ).spinner( "value" )]).send([0xc0,program])
+  }
+}).width(1260);
+
+$( "#Amount" ).val( $( "#Slider" ).slider(  "value" ));
+$( "#Tabl" ).val(mas[$( "#Slider" ).slider(  "value" )]);
+$( "#Slider" ).slider({
+  slide: function( event, ui ) {
+    $( "#Amount" ).val( ui.value);
+    $( "#Tabl" ).val(mas[ui.value])
+  }
+});
+		                    
+$( "#selectmidi" ).change(function () {
+  JZZ().openMidiOut().send([0xc0,$( "#Slider" ).slider( "value" )])
+});
+
+  var canvas = $("canvas")[0];
+  var renderer = new Vex.Flow.Renderer(canvas,
+    Vex.Flow.Renderer.Backends.CANVAS);
+
+  var ctx = renderer.getContext();
+  var stave = new Vex.Flow.Stave(40, 70, 230);
+  stave.addClef("treble").setContext(ctx).draw();
+  
+  var voice = new Vex.Flow.Voice({
+    num_beats: 0,
+    beat_value: 4,
+    resolution: Vex.Flow.RESOLUTION
+  });
+
+  // Add notes to voice
+  voice.addTickables([]);
+
+  // Format and justify the notes to 300 pixels
+  var formatter = new Vex.Flow.Formatter().
+  joinVoices([voice]).format([voice], 230);
+
+  // Render voice
+  voice.draw(ctx, stave); 
+
+</script>
+</body></html>
